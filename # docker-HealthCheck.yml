@@ -1,0 +1,8 @@
+# docker-compose.yml
+# Este archivo define un servicio de Docker para una aplicación Node.js con MongoDB.
+# Healthcheck lo inclui para verificar el estado del servicio.
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3

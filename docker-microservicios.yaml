@@ -1,0 +1,78 @@
+version: '3.8' # Docker Compose file para microservicios
+# Este archivo define los servicios, redes y volúmenes necesarios para la aplicación
+
+services: 
+  # Servicio de API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - auth
+      - projects
+      - notification
+      - chat
+# Servicios de microservicios
+  # Cada servicio tiene su propia base de datos y configuración
+  auth:
+    build: ./services/auth
+    environment:
+      AUTH_DB_URI: mongodb://mongodb-auth:27017/auth
+    depends_on:
+      - mongodb-auth
+# Servicio de gestión de proyectos
+  # Cada proyecto tiene su propia base de datos MongoDB
+  projects:
+    build: ./services/projects
+    environment:
+      PROJECTS_DB_URI: mongodb://mongodb-projects:27017/projects
+    depends_on:
+      - mongodb-projects
+# Servicio de notificaciones
+  # Utiliza Redis para la gestión de colas de mensajes
+  # y notificaciones en tiempo real
+  notification:
+    build: ./services/notification
+    ports:
+      - "3004:3004"
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+# Servicio de chat
+  # Permite la comunicación en tiempo real entre usuarios
+  chat:
+    build: ./services/chat
+    ports:
+      - "3005:3005"
+# Dependencias de bases de datos y servicios
+    environment:
+      CHAT_DB_URI: mongodb://mongodb-chat:27017/chat
+    depends_on:
+      - mongodb-chat
+      - redis
+  mongodb-auth:
+    image: mongo:5.0
+    volumes:
+      - auth-data:/data/db
+#
+  mongodb-projects:
+    image: mongo:5.0
+    volumes:
+      - project-data:/data/db
+  mongodb-chat:
+    image: mongo:5.0
+    volumes:
+      - chat-data:/data/db
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis-data:/data
+# Red de comunicación entre servicios
+networks:
+  default:
+    driver: bridge
+volumes:
+  auth-data:
+  project-data:
+  redis-data:
